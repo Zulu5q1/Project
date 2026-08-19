@@ -128,6 +128,8 @@ model Listing {
   @@index([campusId])
   @@index([categoryId])
   @@index([status])
+  @@index([price])
+  @@index([viewCount])
   @@index([createdAt])
 }
 

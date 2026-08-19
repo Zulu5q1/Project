@@ -241,10 +241,18 @@ npm run db:setup         # Run migrations + seed in one step
 |---|---|---|
 | `page` | number | Page number (default: 1) |
 | `limit` | number | Items per page (default: 20, max: 50) |
-| `universityId` | string | Filter by university |
-| `campusId` | string | Filter by campus |
-| `categoryId` | string | Filter by category |
-| `status` | string | Filter by status (default: ACTIVE) |
+| `q` | string | Text search across title and description (case-insensitive) |
+| `universityId` | string | Filter by university ID |
+| `campusId` | string | Filter by campus ID |
+| `categoryId` | string | Filter by category ID |
+| `condition` | string | Filter by condition: `NEW`, `LIKE_NEW`, `GOOD`, `FAIR`, `USED` |
+| `minPrice` | number | Minimum price (non-negative) |
+| `maxPrice` | number | Maximum price (non-negative, must be >= minPrice) |
+| `sort` | string | Sort order: `newest` (default), `price_asc`, `price_desc`, `views` |
+| `sellerId` | string | Filter by seller ID |
+| `status` | string | Filter by status (default: ACTIVE, RESERVED, SOLD) |
+
+All filters compose correctly. Returns `400 Bad Request` for invalid parameters.
 
 **Listing statuses:** `ACTIVE`, `RESERVED`, `SOLD`, `REMOVED`
 
@@ -304,7 +312,7 @@ Without Cloudinary configured, the `/api/images` upload endpoint returns a `501 
 
 ## Current Status
 
-**Phase 3A — Marketplace Foundation & Listings** is complete.
+**Phase 3B — Search & Discovery** is complete.
 
 ### What's Implemented
 
@@ -334,6 +342,18 @@ Without Cloudinary configured, the `/api/images` upload endpoint returns a `501 
 - Protected frontend routes (`/listings/new`, `/listings/:id/edit`)
 - Database schema: University, Campus, User, Category, Listing, ListingImage
 - Seed data: 5 universities, 7 campuses, 8 categories, 4 demo listings
+- **Text search** across listing title and description (case-insensitive)
+- **University filter** (My University / All Universities / specific)
+- **Campus filter** (dependent on university selection)
+- **Condition filter** (New, Like New, Good, Fair, Used)
+- **Price range filter** (min/max with validation)
+- **Sort options** (Newest, Price Low-High, Price High-Low, Most Viewed)
+- **URL-based filter state** (all filters persisted in query parameters)
+- **Active filter badges** with individual and clear-all
+- **Mobile filter drawer** (slide-in panel)
+- **Result count** reflecting active search/filter combination
+- **Backend validation** for all filter parameters (400 on invalid)
+- **Database indexes** on price and viewCount for sort performance
 
 ### Database Models
 
@@ -347,9 +367,9 @@ Without Cloudinary configured, the `/api/images` upload endpoint returns a `501 
 - `ListingCondition` enum — NEW, LIKE_NEW, GOOD, FAIR, USED
 - `ListingStatus` enum — ACTIVE, RESERVED, SOLD, REMOVED
 
-## Next Steps (Phase 3B+)
+## Next Steps (Phase 3C+)
 
-- Advanced search and filtering
+- Shopping cart and transactions
 - University/campus CRUD for admin
 - Favorites / wishlist
 - Reviews and ratings

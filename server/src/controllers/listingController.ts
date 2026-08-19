@@ -1,9 +1,11 @@
 import { Request, Response } from "express";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { errorResponse, successResponse } from "../utils/helpers";
 
 const VALID_CONDITIONS = ["NEW", "LIKE_NEW", "GOOD", "FAIR", "USED"];
 const VALID_STATUSES = ["ACTIVE", "RESERVED", "SOLD", "REMOVED"];
+const VALID_SORT_OPTIONS = ["newest", "price_asc", "price_desc", "views"];
 
 const LISTING_SELECT = {
   id: true,
@@ -40,7 +42,21 @@ export async function getListings(req: Request, res: Response): Promise<void> {
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
     const skip = (page - 1) * limit;
 
-    const where: Record<string, unknown> = { status: { in: ["ACTIVE", "RESERVED", "SOLD"] } };
+    const where: Prisma.ListingWhereInput = {
+      status: { in: ["ACTIVE", "RESERVED", "SOLD"] },
+    };
+
+    if (req.query.sellerId) {
+      where.sellerId = req.query.sellerId as string;
+    }
+    if (req.query.status) {
+      const requestedStatus = req.query.status as string;
+      if (requestedStatus === "REMOVED") {
+        where.status = { notIn: ["ACTIVE", "RESERVED", "SOLD"] };
+      } else if (VALID_STATUSES.includes(requestedStatus)) {
+        where.status = requestedStatus as "ACTIVE" | "RESERVED" | "SOLD" | "REMOVED";
+      }
+    }
 
     if (req.query.universityId) {
       where.universityId = req.query.universityId as string;
@@ -51,23 +67,74 @@ export async function getListings(req: Request, res: Response): Promise<void> {
     if (req.query.categoryId) {
       where.categoryId = req.query.categoryId as string;
     }
-    if (req.query.sellerId) {
-      where.sellerId = req.query.sellerId as string;
-    }
-    if (req.query.status) {
-      const requestedStatus = req.query.status as string;
-      if (requestedStatus === "REMOVED") {
-        where.status = { notIn: ["ACTIVE", "RESERVED", "SOLD"] };
-      } else {
-        where.status = requestedStatus;
+
+    if (req.query.q) {
+      const q = (req.query.q as string).trim();
+      if (q.length > 0) {
+        where.OR = [
+          { title: { contains: q, mode: "insensitive" } },
+          { description: { contains: q, mode: "insensitive" } },
+        ];
       }
+    }
+
+    if (req.query.condition) {
+      const cond = (req.query.condition as string).toUpperCase();
+      if (VALID_CONDITIONS.includes(cond)) {
+        where.condition = cond as "NEW" | "LIKE_NEW" | "GOOD" | "FAIR" | "USED";
+      }
+    }
+
+    if (req.query.minPrice || req.query.maxPrice) {
+      const priceFilter: Prisma.FloatFilter = {};
+      if (req.query.minPrice) {
+        const min = parseFloat(req.query.minPrice as string);
+        if (isNaN(min) || min < 0) {
+          errorResponse(res, "minPrice must be a non-negative number", 400);
+          return;
+        }
+        priceFilter.gte = min;
+      }
+      if (req.query.maxPrice) {
+        const max = parseFloat(req.query.maxPrice as string);
+        if (isNaN(max) || max < 0) {
+          errorResponse(res, "maxPrice must be a non-negative number", 400);
+          return;
+        }
+        priceFilter.lte = max;
+      }
+      if (priceFilter.gte !== undefined && priceFilter.lte !== undefined && priceFilter.gte > priceFilter.lte) {
+        errorResponse(res, "minPrice cannot be greater than maxPrice", 400);
+        return;
+      }
+      where.price = priceFilter;
+    }
+
+    let orderBy: Prisma.ListingOrderByWithRelationInput = { createdAt: "desc" };
+    const sort = (req.query.sort as string)?.toLowerCase() || "newest";
+    if (sort && !VALID_SORT_OPTIONS.includes(sort)) {
+      errorResponse(res, `Invalid sort. Must be one of: ${VALID_SORT_OPTIONS.join(", ")}`, 400);
+      return;
+    }
+    switch (sort) {
+      case "price_asc":
+        orderBy = { price: "asc" };
+        break;
+      case "price_desc":
+        orderBy = { price: "desc" };
+        break;
+      case "views":
+        orderBy = { viewCount: "desc" };
+        break;
+      default:
+        orderBy = { createdAt: "desc" };
     }
 
     const [listings, total] = await Promise.all([
       prisma.listing.findMany({
         where,
         select: LISTING_SELECT,
-        orderBy: { createdAt: "desc" },
+        orderBy,
         skip,
         take: limit,
       }),

@@ -61,11 +61,31 @@
 - [x] README updated with marketplace, listing API, image configuration, seed data
 - [x] TASKS.md updated
 
-## Phase 3B — (Not started)
+## Phase 3B — Search & Discovery
 
-- [ ] Advanced search
-- [ ] Advanced filtering and sorting
-- [ ] University/campus CRUD for admin
+- [x] Text search across listing title and description (case-insensitive, backend `contains` query)
+- [x] Category filter (dropdown, loaded from API)
+- [x] University filter (My University / All Universities / specific)
+- [x] Campus filter (dependent on selected university, resets on university change)
+- [x] Condition filter (dropdown from ListingCondition enum)
+- [x] Price range filter (min/max with validation)
+- [x] Sorting (newest, price_asc, price_desc, views) — database-level sorting
+- [x] URL-based filter/sort/search state (all params in URL query string)
+- [x] Result count display
+- [x] Active filter badges with individual clear buttons
+- [x] Clear All Filters button
+- [x] Pagination (preserved from Phase 3A, works with filters)
+- [x] Loading, error, and empty states
+- [x] Mobile filter drawer (slide-in panel with filter controls)
+- [x] Desktop sidebar filter layout
+- [x] Backend validation: minPrice/maxPrice numeric, non-negative, min <= max
+- [x] Backend validation: condition enum values, sort option whitelist
+- [x] Backend validation: 400 Bad Request for invalid parameters
+- [x] University scoping: authenticated users default to own university
+- [x] University scoping: unauthenticated users see all universities
+- [x] REMOVED listings remain hidden from all search/filter/sort
+- [x] Database index on Listing.price and Listing.viewCount for sort performance
+- [x] All filters compose correctly in a single backend query
 
 ## Phase 4 — Marketplace Enhancements
 
