@@ -1,0 +1,144 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum ListingCondition {
+  NEW
+  LIKE_NEW
+  GOOD
+  FAIR
+  USED
+}
+
+enum ListingStatus {
+  ACTIVE
+  RESERVED
+  SOLD
+  REMOVED
+}
+
+model University {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  shortName   String    @unique
+  logo        String?
+  description String?
+  location    String?
+  website     String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  campuses Campus[]
+  users    User[]
+  listings Listing[]
+}
+
+model Campus {
+  id           String   @id @default(uuid())
+  name         String
+  universityId String
+  location     String?
+  description  String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  university University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  users      User[]
+  listings   Listing[]
+
+  @@unique([name, universityId])
+}
+
+model User {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  passwordHash   String
+  firstName      String
+  lastName       String
+  username       String    @unique
+  profileImage   String?
+  bio            String?
+  department     String?
+  role           Role      @default(STUDENT)
+  universityId   String?
+  campusId       String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  university University? @relation(fields: [universityId], references: [id])
+  campus     Campus?      @relation(fields: [campusId], references: [id])
+  listings   Listing[]
+
+  @@index([email])
+  @@index([username])
+  @@index([universityId])
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  listings Listing[]
+
+  @@index([slug])
+  @@index([isActive])
+}
+
+model Listing {
+  id            String           @id @default(uuid())
+  title         String
+  description   String
+  price         Float
+  condition     ListingCondition
+  status        ListingStatus    @default(ACTIVE)
+  location      String?
+  viewCount     Int              @default(0)
+  sellerId      String
+  universityId  String
+  campusId      String
+  categoryId    String
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  seller   User      @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  university University @relation(fields: [universityId], references: [id])
+  campus   Campus    @relation(fields: [campusId], references: [id])
+  category Category  @relation(fields: [categoryId], references: [id])
+  images   ListingImage[]
+
+  @@index([sellerId])
+  @@index([universityId])
+  @@index([campusId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ListingImage {
+  id        String   @id @default(uuid())
+  listingId String
+  url       String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+}
