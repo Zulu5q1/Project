@@ -158,9 +158,13 @@ export default function Marketplace() {
     (sort !== "newest" ? 1 : 0);
 
   const handleUniversityChange = (value: string) => {
-    updateParam("university", value);
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
+      if (value) {
+        next.set("university", value);
+      } else {
+        next.delete("university");
+      }
       next.delete("campus");
       next.delete("page");
       return next;
@@ -174,7 +178,11 @@ export default function Marketplace() {
           <h1 className="text-3xl font-bold text-gray-900">Marketplace</h1>
           {user?.university && (
             <p className="text-gray-500 mt-1">
-              {universityParam === "all" ? "All Universities" : user.university.name}
+              {universityParam === "all"
+                ? "All Universities"
+                : universityParam && universityParam !== "my"
+                  ? universities.find((u) => u.id === universityParam)?.name || "Marketplace"
+                  : user.university.name}
             </p>
           )}
         </div>
