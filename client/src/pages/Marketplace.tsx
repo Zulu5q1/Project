@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { apiFetch } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import HeartButton from "../components/HeartButton";
 import type { Listing, Category, University, Campus, PaginatedListings } from "../types";
 
 const CONDITION_OPTIONS = [
@@ -51,6 +52,7 @@ export default function Marketplace() {
   const [error, setError] = useState("");
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
 
   const [searchInput, setSearchInput] = useState(searchParams.get("q") || "");
 
@@ -119,6 +121,15 @@ export default function Marketplace() {
       setCampuses([]);
     }
   }, [effectiveUniversityId, universityParam, user]);
+
+  useEffect(() => {
+    if (!user) return;
+    apiFetch<{ favorites: { listing: { id: string } }[] }>("/api/favorites?limit=500")
+      .then((res) => {
+        setFavoriteIds(new Set(res.favorites.map((f) => f.listing.id)));
+      })
+      .catch(() => {});
+  }, [user]);
 
   useEffect(() => {
     if (!authLoading) {
@@ -325,6 +336,15 @@ export default function Marketplace() {
             universityParam={universityParam}
             campusId={campusId}
             campuses={campuses}
+            favoriteIds={favoriteIds}
+            onToggleFavorite={(id, fav) => {
+              setFavoriteIds((prev) => {
+                const next = new Set(prev);
+                if (fav) next.add(id);
+                else next.delete(id);
+                return next;
+              });
+            }}
           />
         </div>
       </div>
@@ -347,6 +367,15 @@ export default function Marketplace() {
           universityParam={universityParam}
           campusId={campusId}
           campuses={campuses}
+          favoriteIds={favoriteIds}
+          onToggleFavorite={(id, fav) => {
+            setFavoriteIds((prev) => {
+              const next = new Set(prev);
+              if (fav) next.add(id);
+              else next.delete(id);
+              return next;
+            });
+          }}
         />
       </div>
     </div>
@@ -504,6 +533,8 @@ interface ListingResultsProps {
   universityParam: string;
   campusId: string;
   campuses: Campus[];
+  favoriteIds: Set<string>;
+  onToggleFavorite: (listingId: string, isFavorited: boolean) => void;
 }
 
 function ListingResults({
@@ -522,6 +553,8 @@ function ListingResults({
   universityParam,
   campusId,
   campuses,
+  favoriteIds,
+  onToggleFavorite,
 }: ListingResultsProps) {
   const categoryName = categories.find((c) => c.id === categoryId)?.name || "";
   const campusName = campuses.find((c) => c.id === campusId)?.name || "";
@@ -628,6 +661,13 @@ function ListingResults({
                     ) : (
                       <svg className="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                     )}
+                    <div className="absolute top-2 left-2 z-10">
+                      <HeartButton
+                        listingId={listing.id}
+                        initialFavorited={favoriteIds.has(listing.id)}
+                        onToggle={onToggleFavorite}
+                      />
+                    </div>
                     {statusInfo && listing.status !== "ACTIVE" && (
                       <span className={`absolute top-2 right-2 px-2.5 py-1 rounded-full text-xs font-medium ${statusInfo.className}`}>
                         {statusInfo.label}

@@ -75,6 +75,12 @@ function Navbar() {
                     )}
                   </Link>
                   <Link
+                    to="/favorites"
+                    className={`hover:text-primary-600 transition-colors ${isActive("/favorites")}`}
+                  >
+                    Favorites
+                  </Link>
+                  <Link
                     to="/profile"
                     className={`hover:text-primary-600 transition-colors ${isActive("/profile")}`}
                   >

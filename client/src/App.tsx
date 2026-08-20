@@ -11,6 +11,7 @@ import ListingDetail from "./pages/ListingDetail";
 import EditListing from "./pages/EditListing";
 import Messages from "./pages/Messages";
 import Conversation from "./pages/Conversation";
+import Favorites from "./pages/Favorites";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -43,6 +44,7 @@ function App() {
         <Route path="listings/:id/edit" element={<ProtectedRoute><EditListing /></ProtectedRoute>} />
         <Route path="messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
         <Route path="messages/:conversationId" element={<ProtectedRoute><Conversation /></ProtectedRoute>} />
+        <Route path="favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

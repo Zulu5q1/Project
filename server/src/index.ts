@@ -12,6 +12,7 @@ import categoryRoutes from "./routes/categories";
 import listingRoutes from "./routes/listings";
 import imageRoutes from "./routes/images";
 import conversationRoutes from "./routes/conversations";
+import favoriteRoutes from "./routes/favorites";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 
 const app = express();
@@ -29,6 +30,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/listings", listingRoutes);
 app.use("/api/images", imageRoutes);
 app.use("/api/conversations", conversationRoutes);
+app.use("/api/favorites", favoriteRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

@@ -113,3 +113,19 @@ export interface PaginatedMessages {
     totalPages: number;
   };
 }
+
+export interface Favorite {
+  id: string;
+  createdAt: string;
+  listing: Listing;
+}
+
+export interface PaginatedFavorites {
+  favorites: Favorite[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}

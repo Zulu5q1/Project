@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { apiFetch } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import HeartButton from "../components/HeartButton";
 import type { Listing } from "../types";
 
 const CONDITION_LABELS: Record<string, string> = {
@@ -38,6 +39,7 @@ export default function ListingDetail() {
   const [statusLoading, setStatusLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [messageLoading, setMessageLoading] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -52,6 +54,13 @@ export default function ListingDetail() {
       })
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (!id || !user) return;
+    apiFetch<{ isFavorited: boolean }>(`/api/favorites/check/${id}`)
+      .then((res) => setIsFavorited(res.isFavorited))
+      .catch(() => {});
+  }, [id, user]);
 
   const isOwner = user && listing && user.id === listing.seller.id;
   const isAdmin = user?.role === "ADMIN";
@@ -178,14 +187,23 @@ export default function ListingDetail() {
           <div>
             <div className="flex items-start justify-between gap-4">
               <h1 className="text-2xl font-bold text-gray-900">{listing.title}</h1>
-              <span className={`px-3 py-1 rounded-full text-xs font-medium flex-shrink-0 ${
-                listing.status === "ACTIVE" ? "bg-green-100 text-green-800" :
-                listing.status === "SOLD" ? "bg-red-100 text-red-800" :
-                listing.status === "RESERVED" ? "bg-yellow-100 text-yellow-800" :
-                "bg-gray-100 text-gray-800"
-              }`}>
-                {STATUS_LABELS[listing.status]}
-              </span>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {user && (
+                  <HeartButton
+                    listingId={listing.id}
+                    initialFavorited={isFavorited}
+                    onToggle={(_id, fav) => setIsFavorited(fav)}
+                  />
+                )}
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  listing.status === "ACTIVE" ? "bg-green-100 text-green-800" :
+                  listing.status === "SOLD" ? "bg-red-100 text-red-800" :
+                  listing.status === "RESERVED" ? "bg-yellow-100 text-yellow-800" :
+                  "bg-gray-100 text-gray-800"
+                }`}>
+                  {STATUS_LABELS[listing.status]}
+                </span>
+              </div>
             </div>
             <p className="text-3xl font-bold text-primary-600 mt-2">{formatPrice(listing.price)}</p>
           </div>
