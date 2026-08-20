@@ -11,6 +11,7 @@ import adminRoutes from "./routes/admin";
 import categoryRoutes from "./routes/categories";
 import listingRoutes from "./routes/listings";
 import imageRoutes from "./routes/images";
+import conversationRoutes from "./routes/conversations";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 
 const app = express();
@@ -27,6 +28,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/listings", listingRoutes);
 app.use("/api/images", imageRoutes);
+app.use("/api/conversations", conversationRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

@@ -1,13 +1,36 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
+import { apiFetch } from "../services/api";
 
 function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchUnread = useCallback(async () => {
+    if (!user) return;
+    try {
+      const res = await apiFetch<{ unreadCount: number }>("/api/conversations/unread-count");
+      setUnreadCount(res.unreadCount);
+    } catch {
+      // silent
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchUnread();
+      const interval = setInterval(fetchUnread, 60000);
+      return () => clearInterval(interval);
+    }
+  }, [user, fetchUnread]);
 
   const isActive = (path: string) =>
-    location.pathname === path ? "text-primary-600 font-semibold" : "text-gray-700";
+    location.pathname === path || (path !== "/" && location.pathname.startsWith(path))
+      ? "text-primary-600 font-semibold"
+      : "text-gray-700";
 
   const handleLogout = () => {
     logout();
@@ -39,6 +62,17 @@ function Navbar() {
                     className={`hover:text-primary-600 transition-colors ${isActive("/listings/new")}`}
                   >
                     Sell
+                  </Link>
+                  <Link
+                    to="/messages"
+                    className={`hover:text-primary-600 transition-colors relative ${isActive("/messages")}`}
+                  >
+                    Messages
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1.5 -right-3.5 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-[18px]">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
                   </Link>
                   <Link
                     to="/profile"

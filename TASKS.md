@@ -87,6 +87,42 @@
 - [x] Database index on Listing.price and Listing.viewCount for sort performance
 - [x] All filters compose correctly in a single backend query
 
+## Phase 3C — Messaging System
+
+- [x] Prisma schema: Conversation model (buyer, seller, listing, unique constraint on listingId+buyerId)
+- [x] Prisma schema: Message model (conversation, sender, content, isRead)
+- [x] Database indexes: Conversation (buyerId, sellerId, updatedAt), Message (conversationId, senderId, createdAt)
+- [x] Migration: `20260819212406_add_messaging`
+- [x] Backend: Create/get conversation (`POST /api/conversations`)
+- [x] Backend: List user's conversations (`GET /api/conversations`)
+- [x] Backend: Get conversation detail (`GET /api/conversations/:id`)
+- [x] Backend: Get paginated messages (`GET /api/conversations/:id/messages`)
+- [x] Backend: Send message (`POST /api/conversations/:id/messages`)
+- [x] Backend: Mark messages as read (`PATCH /api/conversations/:id/read`)
+- [x] Backend security: All endpoints require authentication
+- [x] Backend security: Only conversation participants can access conversation/messages
+- [x] Backend security: Cannot message yourself (400)
+- [x] Backend security: Cannot create conversation for SOLD/REMOVED listings (400)
+- [x] Backend security: Content validation (required, non-empty, max 2000 chars)
+- [x] Backend security: Sender ID derived from JWT, not client-supplied
+- [x] Backend: Upsert — same buyer+listing returns existing conversation
+- [x] Backend: Unread count in conversation list
+- [x] Backend: Conversation updatedAt updated on new message
+- [x] Frontend: Messages inbox page (`/messages`) — conversation list with listing thumbnail, last message, time ago, unread badge
+- [x] Frontend: Conversation page (`/messages/:id`) — message bubbles, input, send, auto-scroll
+- [x] Frontend: "Message Seller" button on ListingDetail (creates conversation, navigates to it)
+- [x] Frontend: Messages nav link in navbar with unread count indicator
+- [x] Frontend: Listing detail status-aware messaging (ACTIVE/RESERVED allow, SOLD/REMOVED block)
+- [x] Frontend: 30s polling on Messages inbox, 15s polling on Conversation page
+- [x] Frontend: Auto-mark as read when viewing conversation
+- [x] All 19 messaging API tests passed
+- [x] Phase 3B regression tests passed (4/4)
+- [x] Bug fix: listConversations response shape matched frontend expectations (buyer/seller objects, listing.images array)
+- [x] Bug fix: Added unread-count endpoint (`GET /api/conversations/unread-count`)
+- [x] Bug fix: Messages.tsx other-participant logic corrected (was always returning wrong user)
+- [x] Bug fix: getConversation includes listing.images via nested Prisma include
+- [x] All 23/23 tests passed (19 messaging + 4 regression)
+
 ## Phase 4 — Marketplace Enhancements
 
 - [ ] Favorites / Wishlist
@@ -96,8 +132,6 @@
 
 ## Phase 5 — Communication
 
-- [ ] Conversations
-- [ ] Messaging
 - [ ] Notifications
 
 ## Phase 6 — Campus Features

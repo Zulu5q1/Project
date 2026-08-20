@@ -79,3 +79,37 @@ export interface ApiResponse<T = unknown> {
   message?: string;
   data?: T;
 }
+
+export interface Conversation {
+  id: string;
+  listingId: string;
+  buyerId: string;
+  sellerId: string;
+  createdAt: string;
+  updatedAt: string;
+  listing: { id: string; title: string; price: number; images: ListingImage[]; status: Listing["status"] };
+  buyer: { id: string; firstName: string; lastName: string; username: string; profileImage: string | null };
+  seller: { id: string; firstName: string; lastName: string; username: string; profileImage: string | null };
+  lastMessage: { content: string; senderId: string; createdAt: string } | null;
+  unreadCount: number;
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  isRead: boolean;
+  createdAt: string;
+  sender: { id: string; firstName: string; lastName: string; username: string };
+}
+
+export interface PaginatedMessages {
+  messages: Message[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}

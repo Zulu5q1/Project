@@ -264,6 +264,44 @@ All filters compose correctly. Returns `400 Bad Request` for invalid parameters.
 |---|---|---|---|
 | POST | `/api/images` | Upload/validate an image URL | Yes |
 
+### Conversations & Messaging
+
+| Method | Endpoint | Description | Auth |
+|---|---|---|---|
+| POST | `/api/conversations` | Create or get existing conversation for a listing | Yes |
+| GET | `/api/conversations` | List user's conversations (buyer + seller) | Yes |
+| GET | `/api/conversations/:id` | Get conversation detail (participants only) | Yes |
+| GET | `/api/conversations/:id/messages` | Get paginated messages (participants only) | Yes |
+| POST | `/api/conversations/:id/messages` | Send a message in a conversation | Yes |
+| PATCH | `/api/conversations/:id/read` | Mark other participant's messages as read | Yes |
+
+**POST `/api/conversations`** — Body: `{ "listingId": "uuid" }`
+
+- Creates a new conversation between the authenticated user (buyer) and the listing's seller
+- Returns existing conversation if buyer has already messaged about this listing
+- Returns `400` if: listing is SOLD/REMOVED, buyer is the seller, or listingId missing
+
+**GET `/api/conversations`** — Returns conversations with:
+- Listing info (id, title, price, first image)
+- Other participant info
+- Last message content and timestamp
+- Unread message count
+
+**POST `/api/conversations/:id/messages`** — Body: `{ "content": "string" }`
+
+- Content required, non-empty, max 2000 characters
+- Sender ID derived from JWT (not client-supplied)
+- Returns `403` if not a conversation participant
+
+**Query parameters for `GET /api/conversations/:id/messages`:**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `page` | number | Page number (default: 1) |
+| `limit` | number | Messages per page (default: 50, max: 100) |
+
+Messages ordered oldest-first (ASC). Returns `403` if not a participant.
+
 ### Admin
 
 | Method | Endpoint | Description | Auth |
@@ -312,7 +350,7 @@ Without Cloudinary configured, the `/api/images` upload endpoint returns a `501 
 
 ## Current Status
 
-**Phase 3B — Search & Discovery** is complete.
+**Phase 3C — Messaging System** is complete.
 
 ### What's Implemented
 
@@ -354,6 +392,12 @@ Without Cloudinary configured, the `/api/images` upload endpoint returns a `501 
 - **Result count** reflecting active search/filter combination
 - **Backend validation** for all filter parameters (400 on invalid)
 - **Database indexes** on price and viewCount for sort performance
+- **Conversation system** — per-listing buyer-seller conversations with unique constraint
+- **Real-time messaging** — send/receive messages with polling (30s inbox, 15s chat)
+- **Unread tracking** — per-conversation unread count with mark-as-read
+- **Message Seller button** — on listing detail, creates conversation and navigates to chat
+- **Messages navigation** — nav link with unread indicator badge
+- **Security** — participant-only access, no sender spoofing, content validation (max 2000 chars)
 
 ### Database Models
 
@@ -363,15 +407,16 @@ Without Cloudinary configured, the `/api/images` upload endpoint returns a `501 
 - `Category` — marketplace categories with slug and active status
 - `Listing` — marketplace items with price, condition, status, seller, university/campus/category
 - `ListingImage` — multiple images per listing with sort order
+- `Conversation` — buyer-seller conversation per listing (unique on listingId+buyerId)
+- `Message` — individual messages with sender, content, read status
 - `Role` enum — STUDENT, ADMIN
 - `ListingCondition` enum — NEW, LIKE_NEW, GOOD, FAIR, USED
 - `ListingStatus` enum — ACTIVE, RESERVED, SOLD, REMOVED
 
-## Next Steps (Phase 3C+)
+## Next Steps (Phase 4+)
 
 - Shopping cart and transactions
 - University/campus CRUD for admin
 - Favorites / wishlist
 - Reviews and ratings
-- Messaging
-- Orders and purchase workflow
+- Notifications

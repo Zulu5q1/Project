@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { apiFetch } from "../services/api";
 import { useAuth } from "../context/AuthContext";
@@ -37,6 +37,7 @@ export default function ListingDetail() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [statusLoading, setStatusLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [messageLoading, setMessageLoading] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -82,6 +83,21 @@ export default function ListingDetail() {
       setDeleteLoading(false);
     }
   };
+
+  const handleMessageSeller = useCallback(async () => {
+    if (!listing) return;
+    setMessageLoading(true);
+    try {
+      const res = await apiFetch<{ conversation: { id: string } }>("/api/conversations", {
+        method: "POST",
+        body: JSON.stringify({ listingId: listing.id }),
+      });
+      navigate(`/messages/${res.conversation.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to start conversation");
+      setMessageLoading(false);
+    }
+  }, [listing, navigate]);
 
   if (loading) {
     return (
@@ -278,25 +294,29 @@ export default function ListingDetail() {
                 </button>
               </div>
             )}
-            {!isOwner && user && listing.status === "ACTIVE" && (
-              <button
-                className="px-6 py-2.5 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors w-full"
-                disabled
-              >
-                Message Seller (Coming Soon)
-              </button>
+            {isOwner && (
+              <p className="text-sm text-gray-500 text-center">This is your listing</p>
             )}
-            {!isOwner && user && listing.status === "RESERVED" && (
-              <div className="px-6 py-2.5 bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-lg font-medium text-center text-sm">
-                This item is reserved by another buyer
-              </div>
+            {!isOwner && user && (listing.status === "ACTIVE" || listing.status === "RESERVED") && (
+              <button
+                onClick={handleMessageSeller}
+                disabled={messageLoading}
+                className="px-6 py-2.5 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors w-full disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {messageLoading ? "Starting conversation..." : "Message Seller"}
+              </button>
             )}
             {!isOwner && user && listing.status === "SOLD" && (
               <div className="px-6 py-2.5 bg-red-50 border border-red-200 text-red-700 rounded-lg font-medium text-center text-sm">
-                This item has been sold
+                This listing has been sold
               </div>
             )}
-            {!user && listing.status === "ACTIVE" && (
+            {!isOwner && user && listing.status === "REMOVED" && (
+              <div className="px-6 py-2.5 bg-gray-50 border border-gray-200 text-gray-700 rounded-lg font-medium text-center text-sm">
+                This listing has been removed
+              </div>
+            )}
+            {!user && (listing.status === "ACTIVE" || listing.status === "RESERVED") && (
               <Link
                 to="/login"
                 className="block text-center px-6 py-2.5 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
